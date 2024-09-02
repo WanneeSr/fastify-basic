@@ -22,6 +22,7 @@ fastify.register(require("@fastify/static"), {
 
 const usersRoutes = require('./routes/users');
 const compilationRoutes = require('./routes/compilations');
+const openaiRoutes = require('./routes/openai');
 
 
 
@@ -29,7 +30,7 @@ const compilationRoutes = require('./routes/compilations');
 
 fastify.register(usersRoutes);
 fastify.register(compilationRoutes);
-
+fastify.register(openaiRoutes);
 
 
 

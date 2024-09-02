@@ -23,14 +23,46 @@ async function openaiRoutes(fastify, options, next) {
         let content = await main();
         res.send(content);
     });
-    fastify.post('/store/openai', async (req, res) => {
-        try {
-            const content = await main();
-            const sql = 'INSERT INTO openai(content) VALUES(?)';
-            const values = [content];
-            const data = await query(sql, values);
+    // fastify.post('/openai/:user_id', async (req, res) => {
+    //     try {
+    //         const { user_id } = req.params;
+    //         const { code } = req.body;
+
+    //         const completion = await openai.chat.completions.create({
+    //             messages: [{ role: "system", content: "You are a helpful assistant." },
+    //                 {role:'user',content:`Can you write better than this ${code}`}
+    //             ],
+    //             model: "gpt-3.5-turbo-0125",
+    //         });
+
+    //         const sql = 'INSERT INTO openai(user_id, content) VALUES(?, ?)';
+    //         const values = [user_id, completion];
+    //         const data = await query(sql, values);
             
-            res.send({ message: 'Content OpenAI inserted into database!', content_id: data.insertId });
+    //         res.send({ message: 'Content OpenAI inserted into database!', openai_id: data.insertId });
+    //     } catch (error) {
+    //         res.send({ error: error.message });
+    //     }
+    // });
+    
+    fastify.post('/openai/:user_id', async (req, res) => {
+        try {
+            const { user_id } = req.params;
+            const { code } = req.body;
+    
+            const completion = await openai.chat.completions.create({
+                messages: [
+                    { role: "system", content: "You are a helpful assistant." },
+                    { role: "user", content: `Can you write better than this ${code}` }
+                ],
+                model: "gpt-3.5-turbo-0125",
+            });
+    
+            const sql = 'INSERT INTO openai(user_id, content) VALUES(?, ?)';
+            const values = [user_id, completion.choices[0].message.content]; // Assuming 'completion' has this structure
+            await query(sql, values);
+    
+            res.send({ message: 'Content OpenAI inserted into database!' });
         } catch (error) {
             res.send({ error: error.message });
         }

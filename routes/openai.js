@@ -53,9 +53,9 @@ async function openaiRoutes(fastify, options, next) {
             const completion = await openai.chat.completions.create({
                 messages: [
                     { role: "system", content: "You are a helpful assistant." },
-                    { role: "user", content: `Can you write better than this ${code}` }
+                    { role: "user", content: `${code} Can you write better than this` }
                 ],
-                model: "gpt-3.5-turbo-0125",
+                model: "gpt-3.5-turbo",
             });
     
             const sql = 'INSERT INTO openai(user_id, content) VALUES(?, ?)';

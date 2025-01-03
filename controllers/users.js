@@ -4,19 +4,41 @@ const bcrypt = require('bcrypt');
 const getUsers = async (req, res) => {
     try {
         const sql = `SELECT
-            users.user_id, 
-            users.email, 
-            users.first_name, 
-            users.last_name, 
-            users.user_role, 
-            users.user_thumnail, 
-            users.user_status, 
-            users.create_at, 
-            users.updated_at FROM users`;
+	        user_id, 
+	        email, 
+	        first_name, 
+	        last_name, 
+	        user_profile, 
+	        user_role, 
+	        user_status, 
+	        created_at, 
+	        updated_at
+            FROM users`;
 
         const rows = await query(sql);
         res.send(rows);
     } catch (error) {
+        res.status(500).send(error);
+    }
+}
+
+const getUserById = async (req, res) => {
+    try{
+        const {user_id} = req.params;
+        const sql = `SELECT
+	        user_id, 
+	        email, 
+	        first_name, 
+	        last_name, 
+	        user_profile, 
+	        user_role, 
+	        user_status, 
+	        created_at, 
+	        updated_at
+            FROM users WHERE user_id = ?`;
+        const rows = await query(sql,[user_id]);
+        res.send(rows);
+    }catch (error){
         res.status(500).send(error);
     }
 }
@@ -30,7 +52,7 @@ const createUsers = async (req, res) => {
         const values = [email, hashedPassword, first_name, last_name];
         const rows = await query(sql, values);
 
-        res.status(200).send({message: 'Register is Success!', user_id: rows.insertId});
+        res.status(200).send({ message: 'Register is Success!', user_id: rows.insertId });
     } catch (error) {
         res.status(500).send(error);
     }
@@ -38,5 +60,7 @@ const createUsers = async (req, res) => {
 
 module.exports = {
     getUsers,
+    getUserById,
     createUsers,
+
 }

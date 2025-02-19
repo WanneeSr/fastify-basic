@@ -58,9 +58,41 @@ const createUsers = async (req, res) => {
     }
 }
 
+const updateUserById = async (req, res) => {
+    try{
+        const { user_id } = req.params;
+        const { email, password, first_name, last_name} = req.body;
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const sql = `UPDATE users SET email = ?,
+                        password = ?,
+                        first_name = ?,
+                        last_name = ?
+                        WHERE user_id = ?`;
+        const values = [email, hashedPassword, first_name, last_name, user_id];
+        const data = await query(sql, values);
+        res.status(201).send({message: 'Updated!'})
+    }catch(error){
+        res.status(500).send(error);
+    }
+}
+
+const deleteUserById = async (req, res) => {
+    try{
+        const { user_id } = req.params;
+        const sql = `UPDATE users SET user_status = 0 WHERE user_id = ?`;
+        const rows = await query(sql,[user_id]);
+        res.status(200).send({message: `User ID ${rows.insertId} is DELETED!`});
+    }catch(error){
+        res.status(500).send(error);
+    }
+}
+
 module.exports = {
     getUsers,
     getUserById,
     createUsers,
-
+    updateUserById,
+    deleteUserById
 }

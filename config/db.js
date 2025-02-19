@@ -4,7 +4,7 @@ const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'comp_online',
+    database: 'compiler_online_system',
 });
 
 pool.getConnection((err, connection) => {

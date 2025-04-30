@@ -66,24 +66,37 @@ const getActionLogs = async (req, res) => {
 
 const createEventLogs = async (req, res) => {
     try {
-        const { user_id, event_type, severity, message } = req.body;
-        // ตรวจสอบ input ที่จำเป็น
-        if (!user_id || !event_type || !severity || !message) {
-            return res.status(400).send({ message: 'Missing required fields.' });
-        }
-        const created_at = new Date(); // ใช้เวลาเป็น timestamp ISO
-        const metadataStr = metadata ? JSON.stringify(metadata) : null; // ตรวจสอบว่า metadata เป็น JSON หรือไม่
+        const { user_id, event_type, severity, message, metadata } = req.body;
 
+      
+
+        // ตรวจสอบว่า metadata เป็น JSON หรือไม่
+        let metadataStr = null;
+        if (metadata) {
+            try {
+                // ถ้ามี metadata ให้แปลงเป็น JSON
+                metadataStr = JSON.stringify(metadata);
+            } catch (err) {
+                return res.status(400).send({ message: 'Invalid metadata format' });
+            }
+        }
+
+        const created_at = new Date(); // ใช้เวลาเป็น timestamp ISO
+
+        // SQL query สำหรับบันทึก event log
         const sql = `INSERT INTO event_logs (event_type, severity, message, metadata, created_by, created_at) VALUES(?, ?, ?, ?, ?, ?)`;
         const values = [event_type, severity, message, metadataStr, user_id, created_at];
         const data = await query(sql, values);
 
+        // ส่งการตอบกลับเมื่อสร้าง event log สำเร็จ
         res.status(201).send({ message: 'Event log created successfully!', logs_event_id: data.insertId });
+
     } catch (error) {
         console.error('Error creating event log:', error);
         res.status(500).send({ message: 'Error creating event log', error: error.message });
     }
-}
+};
+
 
 const getEventLogs = async (req, res) => {
     try {

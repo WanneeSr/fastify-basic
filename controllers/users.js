@@ -163,12 +163,12 @@ const login = async (req, res, fastify) => {
 
 const register = async (req, res) => {
     const { email, password, confirmpassword, first_name, last_name } = req.body;
+    console.log('📥 Register request:', req.body);
 
     if (!email || !password || !confirmpassword || !first_name || !last_name) {
         return res.status(400).send({
             status: 400,
             message: 'All fields are required',
-            data: []
         });
     }
 
@@ -176,27 +176,43 @@ const register = async (req, res) => {
         return res.status(400).send({
             status: 400,
             message: 'Passwords do not match',
-            data: []
         });
     }
 
     try {
-        // ตรวจสอบ email ซ้ำ
-        const [users] = await query(`SELECT id FROM users WHERE email = ?`, [email]);
+        // ตรวจสอบว่า email ซ้ำหรือไม่
+        const users = await query(`SELECT * FROM users WHERE email = ?`, [email]);
         if (users.length > 0) {
             return res.status(409).send({
                 status: 409,
                 message: 'Email is already in use',
-                data: []
             });
         }
 
+        // เข้ารหัสรหัสผ่าน
         const hashedPassword = await bcrypt.hash(password, 10);
         const sql = `INSERT INTO users (email, password, first_name, last_name) VALUES (?, ?, ?, ?)`;
         const values = [email, hashedPassword, first_name, last_name];
 
+        // เพิ่มผู้ใช้งานใหม่
         const result = await query(sql, values);
 
+        // บันทึก event log
+        const logQuery = `
+            INSERT INTO event_logs (event_type, severity, message, metadata, created_by, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        const logValues = [
+            'register',               // event_type
+            'INFO',                   // severity
+            `New user registered: ${email}`,  // message
+            JSON.stringify({ email, first_name, last_name }),  // metadata
+            result.insertId,         // created_by
+            new Date()               // created_at
+        ];
+        await query(logQuery, logValues);
+
+        // ตอบกลับ frontend
         return res.status(201).send({
             status: 201,
             message: 'Registration successful',
@@ -209,14 +225,14 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error during registration:', error);
+        console.error('❌ Error during registration:', error);
         return res.status(500).send({
             status: 500,
             message: 'Internal server error',
-            data: []
         });
     }
 };
+
 
 
 module.exports = {
@@ -226,5 +242,6 @@ module.exports = {
     updateUserById,
     deleteUserById,
     login,
-    register
+    register,
+    verify
 }

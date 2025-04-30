@@ -1,4 +1,4 @@
-const fastify = require('fastify')({logger: true});
+const fastify = require('fastify')({ logger: true });
 const util = require("node:util");
 const { pipeline } = require("node:stream");
 const pump = util.promisify(pipeline);
@@ -7,7 +7,7 @@ const path = require("path");
 
 fastify.register(require("@fastify/multipart"));
 fastify.register(require('@fastify/jwt'), { secret: 'lookthorwow' });
-fastify.register(require('@fastify/cors'),{ });
+fastify.register(require('@fastify/cors'), {});
 fastify.register(require("fastify-socket.io"), {
     cors: {
         origin: "*",
@@ -18,7 +18,7 @@ fastify.register(require("fastify-socket.io"), {
 fastify.register(require("@fastify/static"), {
     root: path.join(__dirname, 'uploads'),
     prefix: '/uploads/',
-  });
+});
 
 
 
@@ -26,7 +26,10 @@ fastify.register(require("@fastify/static"), {
 const usersRoutes = require('./routes/users');
 const compilationRoutes = require('./routes/compilations');
 const openaiRoutes = require('./routes/openai');
-
+const logsRoutes = require('./routes/logs');
+const sectionsRoutes = require('./routes/sections');
+const lessonsRoutes = require('./routes/lessons');
+// const coursesRoutes = require('./routes/courses');
 
 
 
@@ -35,6 +38,10 @@ const openaiRoutes = require('./routes/openai');
 fastify.register(usersRoutes);
 fastify.register(compilationRoutes);
 fastify.register(openaiRoutes);
+fastify.register(logsRoutes);
+fastify.register(sectionsRoutes);
+fastify.register(lessonsRoutes);
+// fastify.register(coursesRoutes);
 
 
 

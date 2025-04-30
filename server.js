@@ -1,5 +1,4 @@
 const fastify = require('fastify')({logger: true});
-const cors = require('@fastify/cors');
 const util = require("node:util");
 const { pipeline } = require("node:stream");
 const pump = util.promisify(pipeline);
@@ -7,14 +6,13 @@ const path = require("path");
 
 
 fastify.register(require("@fastify/multipart"));
-
-
-// ตั้งค่า CORS
-fastify.register(cors, {
-    origin: 'http://localhost:3000', // อนุญาตเฉพาะโดเมนนี้ให้เข้าถึง
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // วิธี HTTP ที่อนุญาต
-    allowedHeaders: ['Content-Type'], // Header ที่อนุญาตให้ใช้ใน request
-    // credentials: true // อนุญาตให้ส่งข้อมูลที่มีการยืนยันตัวตน (เช่น cookies)
+fastify.register(require('@fastify/jwt'), { secret: 'lookthorwow' });
+fastify.register(require('@fastify/cors'),{ });
+fastify.register(require("fastify-socket.io"), {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST", "PUT"]
+    }
 });
 
 fastify.register(require("@fastify/static"), {
@@ -28,6 +26,7 @@ fastify.register(require("@fastify/static"), {
 const usersRoutes = require('./routes/users');
 const compilationRoutes = require('./routes/compilations');
 const openaiRoutes = require('./routes/openai');
+
 
 
 

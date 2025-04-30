@@ -18,7 +18,7 @@ async function main() {
     return completion.choices[0].message.content;
 }
 
-async function openaiRoutes(fastify, options, next) {
+async function openaiRoutes(fastify, options) {
     fastify.get('/ai', async (req, res) => {
         let content = await main();
         res.send(content);

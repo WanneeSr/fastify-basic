@@ -102,68 +102,105 @@ async function verify(token) {
 
 const login = async (req, res, fastify) => {
     const { email, password } = req.body;
-    const sql = `SELECT * FROM users WHERE email = ?`;
-    
+    // ตรวจสอบข้อมูลที่รับจาก client
+    console.log('Request received with email:', email, 'and password:', password);
+    if (!email || !password) {
+        return res.status(400).send({
+            status: 400,
+            message: 'Email and password are required',
+            data: []
+        });
+    }
+
     try {
-        let result = await query(sql, [email]);
+        // ค้นหาผู้ใช้
+        const users = await query(`SELECT * FROM users WHERE email = ?`, [email]);
+        if (users.length === 0) {
+            await logLoginAttempt(null, email, 'fail', 'User not found'); //บันทึกการพยายามเข้าระบบ
+            return res.status(401).send({
+                status: 401,
+                message: 'Invalid email or password',
+                data: []
+            });
+        }
+        // สร้าง hash ใหม่จาก password
+        const hash = await bcrypt.hash(password, 10);
 
-        if (result.length === 0) {
-            // ถ้าไม่พบผู้ใช้ในระบบ
-            return res.status(400).send({
-                status: 400,
-                message: 'User not found',
+        const user = users[0];
+
+
+        const match = await bcrypt.compare(password, hash);
+        console.log('Password match:', match);
+
+        if (!match) {
+            await logLoginAttempt(user.user_id, email, 'fail', 'Incorrect password');
+            return res.status(401).send({
+                status: 401,
+                message: 'Invalid email or password',
                 data: []
             });
         }
 
-        // ตรวจสอบรหัสผ่าน
-        const user = result[0];
-        const passwordMatch = await bcrypt.compare(password, user.password);
+        await logLoginAttempt(user.user_id, email, 'success', 'Login successful');
 
-        if (!passwordMatch) {
-            // ถ้ารหัสผ่านไม่ถูกต้อง
-            return res.status(400).send({
-                status: 400,
-                message: 'Invalid password',
-                data: []
-            });
-        }
-        // ถ้ารหัสผ่านถูกต้อง
-        const token = fastify.jwt.sign({ 
+        const token = fastify.jwt.sign({
             user_id: user.user_id,
             email: user.email,
+            user_status: user.user_status,
             first_name: user.first_name,
             last_name: user.last_name,
-            user_profile: user.user_profile,
             iat: moment().unix(),
             exp: moment().add(1440, 'minutes').unix()
-         });
-         return res.status(200).send({
-            status: user.status == 0 ? 403 : 200,
-            message: 'Success',
+        });
+
+        return res.status(200).send({
+            status: 200,
+            message: 'Login successful',
             data: {
                 user_id: user.user_id,
                 email: user.email,
                 first_name: user.first_name,
                 last_name: user.last_name,
-                user_profile: user.user_profile,
-                user_status: user.user_status,
                 token: token
             }
         });
+
     } catch (error) {
-        console.error('Error during login:', error);
+        console.error('Login error:', error);
         return res.status(500).send({
             status: 500,
             message: 'Internal server error',
             data: []
         });
     }
-}
+};
+
+// 🧾 ฟังก์ชันบันทึก log การ login
+const logLoginAttempt = async (user_id, email, status, note) => {
+    const sql = `INSERT INTO event_logs (event_type, severity, message, metadata, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
+
+    const metadata = {
+        email: email,
+        status: status,
+        note: note
+    };
+
+    const values = [
+        status === 'success' ? 'login_success' : 'login_failure', // แยก event_type
+        status === 'success' ? 'info' : 'warning',               // severity เป็น 'info' สำหรับ success, 'warning' สำหรับ failure
+        `Login ${status}: ${email}`,
+        JSON.stringify(metadata),
+        user_id,
+        new Date()
+    ];
+
+    await query(sql, values);
+};
+
 
 const register = async (req, res) => {
     const { email, password, confirmpassword, first_name, last_name } = req.body;
-    console.log('📥 Register request:', req.body);
+    console.log('Register request:', req.body);
 
     if (!email || !password || !confirmpassword || !first_name || !last_name) {
         return res.status(400).send({
@@ -225,7 +262,7 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error during registration:', error);
+        console.error('Error during registration:', error);
         return res.status(500).send({
             status: 500,
             message: 'Internal server error',

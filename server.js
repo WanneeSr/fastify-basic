@@ -4,6 +4,7 @@ const { pipeline } = require("node:stream");
 const pump = util.promisify(pipeline);
 const path = require("path");
 
+
 fastify.register(require('@fastify/formbody'));
 fastify.register(require("@fastify/multipart"));
 fastify.register(require('@fastify/jwt'), { secret: 'lookthorwow' });

@@ -30,7 +30,7 @@ const openaiRoutes = require('./routes/openai');
 const logsRoutes = require('./routes/logs');
 const sectionsRoutes = require('./routes/sections');
 const lessonsRoutes = require('./routes/lessons');
-// const coursesRoutes = require('./routes/courses');
+const coursesRoutes = require('./routes/courses');
 
 
 
@@ -42,7 +42,7 @@ fastify.register(openaiRoutes);
 fastify.register(logsRoutes);
 fastify.register(sectionsRoutes);
 fastify.register(lessonsRoutes);
-// fastify.register(coursesRoutes);
+fastify.register(coursesRoutes);
 
 
 

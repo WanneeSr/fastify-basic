@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 04, 2025 at 11:22 AM
+-- Generation Time: May 04, 2025 at 09:22 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -60,7 +60,13 @@ CREATE TABLE `courses` (
 --
 
 INSERT INTO `courses` (`course_id`, `course_title`, `course_detail`, `create_by`, `course_status`, `created_at`, `updated_at`) VALUES
-(1, 'การปรับพื้นฐานการเขียนโปรแกรม', 'เป็นคอร์สปรับพื้นฐานสำหรับนักศึกษาใหม่ สาขาวิทยากการคอมพิวเตอร์ ปีการศึกษา 2568', 3, 1, '2025-05-02 10:43:56', '2025-05-02 17:43:56');
+(1, 'การปรับพื้นฐานการเขียนโปรแกรม', 'เป็นคอร์สปรับพื้นฐานสำหรับนักศึกษาใหม่ สาขาวิทยากการคอมพิวเตอร์ ปีการศึกษา 2568', 3, 1, '2025-05-02 10:43:56', '2025-05-02 17:43:56'),
+(2, 'JavaScript Basics', 'เรียนรู้พื้นฐานของ JavaScript สำหรับผู้เริ่มต้น', 1, 1, '2025-05-04 19:15:45', '2025-01-05 12:00:00'),
+(3, 'Vue.js for Beginners', 'สอนการใช้งาน Vue.js แบบเข้าใจง่าย', 2, 1, '2025-05-04 19:15:45', '2025-01-10 14:00:00'),
+(4, 'Advanced Python', 'คอร์สสำหรับผู้ที่มีพื้นฐาน Python แล้ว', 1, 1, '2025-05-04 19:15:45', '2025-02-01 16:00:00'),
+(5, 'Data Structures', 'โครงสร้างข้อมูลเบื้องต้น เช่น array, stack, queue', 1, 1, '2025-05-04 19:15:45', '2025-02-10 18:30:00'),
+(6, 'React Intermediate', 'พัฒนา React app ด้วย state และ hooks', 2, 3, '2025-05-04 19:15:45', '2025-03-01 09:00:00'),
+(7, 'Deleted Course', 'คอร์สนี้ถูกลบ', 3, 2, '2025-05-04 19:15:45', '2024-12-25 11:11:11');
 
 -- --------------------------------------------------------
 
@@ -259,7 +265,7 @@ ALTER TABLE `action_logs`
 -- AUTO_INCREMENT for table `courses`
 --
 ALTER TABLE `courses`
-  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `event_logs`

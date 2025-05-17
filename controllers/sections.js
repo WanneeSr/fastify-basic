@@ -92,6 +92,16 @@ const deleteSections = async (req, res) => {
     }
 }
 
+// const getSectionByCourseId  = async (req, res) => {
+//     try {
+//         const { course_id } = req.params;
+//         const sql = `SELECT * FROM `;
+
+//     } catch (error) {
+        
+//     }
+// }
+
 module.exports = {
     createSections,
     getSections,

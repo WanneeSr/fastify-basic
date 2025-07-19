@@ -6,7 +6,7 @@ async function usersRoutes(fastify, options) {
   fastify.post('/create/user', users.createUsers);
   fastify.put('/update/user/:user_id', users.updateUserById);
   fastify.delete('/delete/:user_id', users.deleteUserById);
-  fastify.post('/login', (req, res) => users.login(req, res, fastify));
+  // fastify.post('/login', (req, res) => users.login(req, res, fastify));
   fastify.post('/register',users.register)
 }
 

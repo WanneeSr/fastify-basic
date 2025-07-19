@@ -23,7 +23,7 @@ fastify.register(require("@fastify/static"), {
 
 
 
-
+const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const compilationRoutes = require('./routes/compilations');
 const openaiRoutes = require('./routes/openai');
@@ -35,7 +35,7 @@ const coursesRoutes = require('./routes/courses');
 
 
 
-
+fastify.register(authRoutes);
 fastify.register(usersRoutes);
 fastify.register(compilationRoutes);
 fastify.register(openaiRoutes);
@@ -44,6 +44,15 @@ fastify.register(sectionsRoutes);
 fastify.register(lessonsRoutes);
 fastify.register(coursesRoutes);
 
+
+
+fastify.decorate("authenticate", async function (request, reply) {
+    try {
+        request.user = await request.jwtVerify();
+    } catch (err) {
+        reply.code(403).send({ error: 'Forbidden' });
+    }
+})
 
 
 

@@ -1,0 +1,10 @@
+[Data Table]
+users  ->  เก็บข้อมูลผู้ใช้งาน
+courses  ->  เก็บข้อมูลวิชา/คอร์สเรียน
+sections  ->  เก็บข้อมูล(หัวข้อ)
+lessons  ->  เก็บข้อมูลบทเรียน
+excercise  ->  เก็บข้อมูลแบบฝึกหัด
+logs  ->  เก็บข้อมูลกิจกรรมภายในระบบแต่จะแยก ระหว่าง action logs กับ event logs
+
+[Data Joined Table]
+users joined courses

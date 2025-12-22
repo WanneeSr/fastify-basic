@@ -9,12 +9,12 @@ fastify.register(require('@fastify/formbody'));
 fastify.register(require("@fastify/multipart"));
 fastify.register(require('@fastify/jwt'), { secret: 'lookthorwow' });
 fastify.register(require('@fastify/cors'), {});
-fastify.register(require("fastify-socket.io"), {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST", "PUT"]
-    }
-});
+// fastify.register(require("fastify-socket.io"), {
+//     cors: {
+//         origin: "*",
+//         methods: ["GET", "POST", "PUT"]
+//     }
+// });
 
 fastify.register(require("@fastify/static"), {
     root: path.join(__dirname, 'uploads'),
@@ -38,7 +38,7 @@ const coursesRoutes = require('./routes/courses');
 fastify.register(authRoutes);
 fastify.register(usersRoutes);
 fastify.register(compilationRoutes);
-fastify.register(openaiRoutes);
+// fastify.register(openaiRoutes);
 fastify.register(logsRoutes);
 fastify.register(sectionsRoutes);
 fastify.register(lessonsRoutes);
@@ -62,9 +62,7 @@ fastify.get('/', function handler(req, res) {
 
 fastify.ready((err) => {
     if (err) {
-        fastify.io.on('connection', (socket) => {
-            console.log(socket);
-        });
+        console.log('connection');
     }
 });
 

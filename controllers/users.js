@@ -5,18 +5,18 @@ const bcrypt = require('bcrypt');
 const getUsers = async (req, res) => {
     try {
         const sql = `
-            SELECT 
-                u.user_id,
-                u.email,
-                u.username,
-                u.thumbnail,
-                GROUP_CONCAT(r.role_name) AS user_roles,
-                u.created_at,
-                u.updated_at
-            FROM users u
-            LEFT JOIN user_role ur ON u.user_id = ur.user_id
-            LEFT JOIN roles r ON ur.role_id = r.role_id
-            GROUP BY u.user_id
+            SELECT
+	users.user_id,
+	users.username,
+	users.email,
+	roles.role_name,
+	users.created_at,
+	users.thumbnail,
+	users.updated_at 
+FROM
+	users
+	LEFT JOIN user_role ON users.user_id = user_role.user_id
+	LEFT JOIN roles ON user_role.role_id = roles.role_id
         `;
 
         const rows = await query(sql);

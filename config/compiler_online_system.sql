@@ -42,10 +42,10 @@ CREATE TABLE `action_logs` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `courses`
+-- Table structure for table `classes`
 --
 
-CREATE TABLE `courses` (
+CREATE TABLE `classes` (
   `course_id` int(11) NOT NULL,
   `course_title` varchar(255) NOT NULL,
   `course_detail` varchar(255) DEFAULT NULL,
@@ -56,10 +56,10 @@ CREATE TABLE `courses` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `courses`
+-- Dumping data for table `classes`
 --
 
-INSERT INTO `courses` (`course_id`, `course_title`, `course_detail`, `create_by`, `course_status`, `created_at`, `updated_at`) VALUES
+INSERT INTO `classes` (`course_id`, `course_title`, `course_detail`, `create_by`, `course_status`, `created_at`, `updated_at`) VALUES
 (1, 'การปรับพื้นฐานการเขียนโปรแกรม', 'เป็นคอร์สปรับพื้นฐานสำหรับนักศึกษาใหม่ สาขาวิทยากการคอมพิวเตอร์ ปีการศึกษา 2568', 3, 1, '2025-05-02 10:43:56', '2025-05-02 17:43:56'),
 (2, 'JavaScript Basics', 'เรียนรู้พื้นฐานของ JavaScript สำหรับผู้เริ่มต้น', 1, 1, '2025-05-04 19:15:45', '2025-01-05 12:00:00'),
 (3, 'Vue.js for Beginners', 'สอนการใช้งาน Vue.js แบบเข้าใจง่าย', 2, 1, '2025-05-04 19:15:45', '2025-01-10 14:00:00'),
@@ -216,9 +216,9 @@ ALTER TABLE `action_logs`
   ADD PRIMARY KEY (`action_id`);
 
 --
--- Indexes for table `courses`
+-- Indexes for table `classes`
 --
-ALTER TABLE `courses`
+ALTER TABLE `classes`
   ADD PRIMARY KEY (`course_id`);
 
 --
@@ -262,9 +262,9 @@ ALTER TABLE `action_logs`
   MODIFY `action_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `courses`
+-- AUTO_INCREMENT for table `classes`
 --
-ALTER TABLE `courses`
+ALTER TABLE `classes`
   MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --

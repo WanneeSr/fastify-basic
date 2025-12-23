@@ -31,16 +31,20 @@ const getUserById = async (req, res) => {
     try {
         const { user_id } = req.params;
         const sql = `SELECT
-	        user_id, 
-	        email, 
-	        first_name, 
-	        last_name, 
-	        user_profile, 
-	        user_role, 
-	        user_status, 
-	        created_at, 
-	        updated_at
-            FROM users WHERE user_id = ?`;
+	users.user_id,
+	users.username,
+	users.email,
+	users.thumbnail,
+	users.created_at,
+	users.updated_at,
+	user_role.role_id,
+	roles.role_name 
+FROM
+	users
+	LEFT JOIN user_role ON users.user_id = user_role.user_id
+	LEFT JOIN roles ON user_role.role_id = roles.role_id 
+WHERE
+	users.user_id = ?`;
         const rows = await query(sql, [user_id]);
         res.send(rows);
     } catch (error) {
@@ -50,47 +54,66 @@ const getUserById = async (req, res) => {
 
 const createUsers = async (req, res) => {
     try {
-        const { email, password, first_name, last_name } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const { email, password_hash, username} = req.body;
+        const hashedPassword = await bcrypt.hash(password_hash, 10);
 
-        const sql = `INSERT INTO users(email, password, first_name, last_name) VALUES(?, ?, ?, ?)`;
-        const values = [email, hashedPassword, first_name, last_name];
+        const sql = `INSERT INTO users(username, email, password_hash, created_at) VALUES(?, ?, ?, ?)`;
+        const values = [username, email, hashedPassword, new Date()];
         const rows = await query(sql, values);
 
-        res.status(200).send({ message: 'Register is Success!', user_id: rows.insertId });
+        res.status(201).send({
+            message: 'User created successfully.',
+            user_id: rows.insertId
+        });
     } catch (error) {
-        res.status(500).send(error);
+        console.error('Error creating user:', error);
+        res.status(500).send({
+            message: 'Internal server error while creating user.',
+            error: error.message
+        });
     }
 }
 
 const updateUserById = async (req, res) => {
     try {
         const { user_id } = req.params;
-        const { email, password, first_name, last_name } = req.body;
+        const { email, password_hash, username } = req.body;
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password_hash, 10);
 
         const sql = `UPDATE users SET email = ?,
-                        password = ?,
-                        first_name = ?,
-                        last_name = ?
+                        password_hash = ?,
+                        username = ?
                         WHERE user_id = ?`;
-        const values = [email, hashedPassword, first_name, last_name, user_id];
+        const values = [email, hashedPassword, username, user_id];
         const data = await query(sql, values);
-        res.status(201).send({ message: 'Updated!' })
+        res.status(200).send({
+            message: 'User updated successfully.'
+        });
     } catch (error) {
-        res.status(500).send(error);
+        console.error('Error updating user:', error);
+        res.status(500).send({
+            message: 'Internal server error while updating user.',
+            error: error.message
+        });
     }
 }
 
 const deleteUserById = async (req, res) => {
     try {
         const { user_id } = req.params;
-        const sql = `UPDATE users SET user_status = 0 WHERE user_id = ?`;
-        const rows = await query(sql, [user_id]);
-        res.status(200).send({ message: `User ID ${rows.insertId} is DELETED!` });
+        const sql = `UPDATE users SET updated_at = ? WHERE user_id = ?`;
+        const values = [new Date(), user_id];
+        const rows = await query(sql, values);
+        res.status(200).send({
+            message: 'User deleted successfully.'
+        });
     } catch (error) {
-        res.status(500).send(error);
+        console.error('Error deleting user:', error);
+        res.status(500).send({
+            message: 'Internal server error while deleting user.',
+            error: error.message
+        });
     }
 }
 
@@ -105,13 +128,13 @@ async function verify(token) {
 }
 
 const login = async (req, res, fastify) => {
-    const { email, password } = req.body;
+    const { email, password_hash } = req.body;
     // ตรวจสอบข้อมูลที่รับจาก client
-    console.log('Request received with email:', email, 'and password:', password);
-    if (!email || !password) {
+    console.log('Request received with email:', email, 'and password_hash:', password_hash);
+    if (!email || !password_hash) {
         return res.status(400).send({
             status: 400,
-            message: 'Email and password are required',
+            message: 'Email and password_hash are required',
             data: []
         });
     }
@@ -128,12 +151,12 @@ const login = async (req, res, fastify) => {
             });
         }
         // สร้าง hash ใหม่จาก password
-        const hash = await bcrypt.hash(password, 10);
+        const hash = await bcrypt.hash(password_hash, 10);
 
         const user = users[0];
 
 
-        const match = await bcrypt.compare(password, hash);
+        const match = await bcrypt.compare(password_hash, hash);
         console.log('Password match:', match);
 
         if (!match) {
@@ -150,9 +173,8 @@ const login = async (req, res, fastify) => {
         const token = fastify.jwt.sign({
             user_id: user.user_id,
             email: user.email,
-            user_status: user.user_status,
-            first_name: user.first_name,
-            last_name: user.last_name,
+            role_id: user.role_id,
+            role_name: user.role_name,
             iat: moment().unix(),
             exp: moment().add(1440, 'minutes').unix()
         });
@@ -163,8 +185,8 @@ const login = async (req, res, fastify) => {
             data: {
                 user_id: user.user_id,
                 email: user.email,
-                first_name: user.first_name,
-                last_name: user.last_name,
+                role_id: user.role_id,
+                role_name: user.role_name,
                 token: token
             }
         });
@@ -203,10 +225,10 @@ const logLoginAttempt = async (user_id, email, status, note) => {
 
 
 const register = async (req, res) => {
-    const { email, password, confirmpassword, first_name, last_name } = req.body;
+    const { email, password_hash, confirmpassword, username } = req.body;
     console.log('Register request:', req.body);
 
-    if (!email || !password || !confirmpassword || !first_name || !last_name) {
+    if (!email || !password_hash || !confirmpassword || !username) {
         return res.status(400).send({
             status: 400,
             message: 'All fields are required',
@@ -231,9 +253,9 @@ const register = async (req, res) => {
         }
 
         // เข้ารหัสรหัสผ่าน
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const sql = `INSERT INTO users (email, password, first_name, last_name) VALUES (?, ?, ?, ?)`;
-        const values = [email, hashedPassword, first_name, last_name];
+        const hashedPassword = await bcrypt.hash(password_hash, 10);
+        const sql = `INSERT INTO users (email, password_hash, username) VALUES (?, ?, ?)`;
+        const values = [email, hashedPassword, username];
 
         // เพิ่มผู้ใช้งานใหม่
         const result = await query(sql, values);
@@ -247,7 +269,7 @@ const register = async (req, res) => {
             'register',               // event_type
             'INFO',                   // severity
             `New user registered: ${email}`,  // message
-            JSON.stringify({ email, first_name, last_name }),  // metadata
+            JSON.stringify({ email, username }),  // metadata
             result.insertId,         // created_by
             new Date()               // created_at
         ];
@@ -260,8 +282,7 @@ const register = async (req, res) => {
             data: {
                 user_id: result.insertId,
                 email,
-                first_name,
-                last_name
+                username,
             }
         });
 

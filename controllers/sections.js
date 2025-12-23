@@ -25,7 +25,14 @@ const createSections = async (req, res) => {
 
 const getSections = async (req, res) => {
     try {
-        const sql = `SELECT * FROM sections`;
+        const sql = `SELECT
+	sections.section_id, 
+	sections.lesson_id, 
+	sections.title, 
+	sections.content, 
+	sections.order_no
+FROM
+	sections`;
         const data = await query(sql);
         res.status(200).send(data);
     } catch (error) {
@@ -40,7 +47,14 @@ const getSections = async (req, res) => {
 const getSectionById = async (req, res) => {
     try {
         const { section_id } = req.params;
-        const sql = `SELECT * FROM sections WHERE section_id = ?`;
+        const sql = `SELECT
+	sections.section_id, 
+	sections.lesson_id, 
+	sections.title, 
+	sections.content, 
+	sections.order_no
+FROM
+	sections WHERE section_id = ?`;
         const data = await query(sql, [section_id]);
         res.status(200).send(data);
     } catch (error) {
@@ -55,16 +69,16 @@ const getSectionById = async (req, res) => {
 const updateSections = async (req, res) => {
     try {
         const { section_id } = req.params;
-        const { section_title, course_id, create_by } = req.body;
+        const { title } = req.body;
 
         const updated_at = new Date();
-        const sql = `UPDATE sections SET section_title = ?, course_id = ?, create_by = ?, updated_at = ? WHERE section_id = ?`;
-        const values = [section_title, course_id, create_by, updated_at, section_id];
+        const sql = `UPDATE sections SET title = ?, updated_at = ? WHERE section_id = ?`;
+        const values = [title, updated_at, section_id];
 
         const data = await query(sql, values);
         res.status(200).send({
             message: 'Section updated successfully.',
-            section_id: data.insertId
+            section_id: section_id
         });
     } catch (error) {
         console.error('Error updating sections:', error);

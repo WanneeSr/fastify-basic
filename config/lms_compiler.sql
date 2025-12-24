@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 22, 2025 at 09:56 AM
+-- Generation Time: Dec 24, 2025 at 05:49 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -762,9 +762,19 @@ INSERT INTO `lessons` (`lesson_id`, `class_id`, `title`, `content`, `created_at`
 
 CREATE TABLE `logs` (
   `log_id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `action` varchar(255) DEFAULT NULL,
-  `ip_address` varchar(45) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL COMMENT 'user who triggered action',
+  `action` varchar(100) NOT NULL COMMENT 'LOGIN_SUCCESS, SUBMIT_CODE, DELETE_CLASS',
+  `action_detail` varchar(255) DEFAULT NULL COMMENT 'short non-sensitive description',
+  `target_type` enum('class','lesson','exercise','submission','test_case','user','file','system') DEFAULT NULL,
+  `target_id` int(11) DEFAULT NULL COMMENT 'id of related resource',
+  `module` enum('auth','class','lesson','exercise','compiler','submission','admin','system') NOT NULL,
+  `log_level` enum('INFO','WARN','ERROR') DEFAULT 'INFO',
+  `http_method` varchar(10) DEFAULT NULL,
+  `endpoint` varchar(255) DEFAULT NULL,
+  `status_code` int(11) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL COMMENT 'can be hashed',
+  `user_agent` varchar(255) DEFAULT NULL,
+  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'safe contextual metadata' CHECK (json_valid(`metadata`)),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -772,107 +782,8 @@ CREATE TABLE `logs` (
 -- Dumping data for table `logs`
 --
 
-INSERT INTO `logs` (`log_id`, `user_id`, `action`, `ip_address`, `created_at`) VALUES
-(1, 1, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(2, 10, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(3, 100, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(4, 11, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(5, 12, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(6, 13, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(7, 14, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(8, 15, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(9, 16, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(10, 17, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(11, 18, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(12, 19, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(13, 2, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(14, 20, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(15, 21, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(16, 22, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(17, 23, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(18, 24, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(19, 25, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(20, 26, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(21, 27, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(22, 28, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(23, 29, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(24, 3, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(25, 30, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(26, 31, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(27, 32, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(28, 33, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(29, 34, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(30, 35, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(31, 36, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(32, 37, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(33, 38, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(34, 39, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(35, 4, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(36, 40, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(37, 41, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(38, 42, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(39, 43, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(40, 44, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(41, 45, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(42, 46, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(43, 47, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(44, 48, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(45, 49, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(46, 5, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(47, 50, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(48, 51, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(49, 52, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(50, 53, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(51, 54, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(52, 55, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(53, 56, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(54, 57, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(55, 58, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(56, 59, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(57, 6, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(58, 60, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(59, 61, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(60, 62, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(61, 63, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(62, 64, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(63, 65, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(64, 66, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(65, 67, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(66, 68, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(67, 69, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(68, 7, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(69, 70, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(70, 71, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(71, 72, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(72, 73, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(73, 74, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(74, 75, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(75, 76, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(76, 77, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(77, 78, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(78, 79, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(79, 8, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(80, 80, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(81, 81, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(82, 82, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(83, 83, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(84, 84, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(85, 85, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(86, 86, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(87, 87, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(88, 88, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(89, 89, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(90, 9, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(91, 90, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(92, 91, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(93, 92, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(94, 93, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(95, 94, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(96, 95, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(97, 96, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(98, 97, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(99, 98, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40'),
-(100, 99, 'LOGIN', '127.0.0.1', '2025-12-22 07:12:40');
+INSERT INTO `logs` (`log_id`, `user_id`, `action`, `action_detail`, `target_type`, `target_id`, `module`, `log_level`, `http_method`, `endpoint`, `status_code`, `ip_address`, `user_agent`, `metadata`, `created_at`) VALUES
+(1, 128, 'LOGIN_FAILURE', 'User login wannee.fahsai@gmail.com', NULL, NULL, 'auth', 'WARN', NULL, NULL, NULL, NULL, NULL, '{\"result\":\"wannee.fahsai@gmail.com\",\"note\":\"success\",\"source\":\"auth\"}', '2025-12-24 15:31:00');
 
 -- --------------------------------------------------------
 
@@ -1635,7 +1546,8 @@ INSERT INTO `users` (`user_id`, `username`, `email`, `password_hash`, `thumbnail
 (97, 'user97', 'user97@example.com', 'hash97', '/avatar/user97.png', '2025-12-22 07:12:40', '2025-12-22 07:12:40'),
 (98, 'user98', 'user98@example.com', 'hash98', '/avatar/user98.png', '2025-12-22 07:12:40', '2025-12-22 07:12:40'),
 (99, 'user99', 'user99@example.com', 'hash99', '/avatar/user99.png', '2025-12-22 07:12:40', '2025-12-22 07:12:40'),
-(100, 'user100', 'user100@example.com', 'hash100', '/avatar/user100.png', '2025-12-22 07:12:40', '2025-12-22 07:12:40');
+(100, 'user100', 'user100@example.com', 'hash100', '/avatar/user100.png', '2025-12-22 07:12:40', '2025-12-22 07:12:40'),
+(128, 'wannee sriwanna', 'wannee.fahsai@gmail.com', '$2b$10$2HOLqNpGASPTskaS7U5vmeTTaKgoUzqimoQYvu0mjYwn6I5SRJ.Sy', NULL, '2025-12-24 14:41:01', '2025-12-24 14:41:01');
 
 -- --------------------------------------------------------
 
@@ -1812,7 +1724,11 @@ ALTER TABLE `lessons`
 --
 ALTER TABLE `logs`
   ADD PRIMARY KEY (`log_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD KEY `idx_logs_user_id` (`user_id`),
+  ADD KEY `idx_logs_action` (`action`),
+  ADD KEY `idx_logs_target` (`target_type`,`target_id`),
+  ADD KEY `idx_logs_module` (`module`),
+  ADD KEY `idx_logs_created_at` (`created_at`);
 
 --
 -- Indexes for table `notification`
@@ -1915,7 +1831,7 @@ ALTER TABLE `lessons`
 -- AUTO_INCREMENT for table `logs`
 --
 ALTER TABLE `logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `notification`
@@ -1963,7 +1879,7 @@ ALTER TABLE `uploads`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=129;
 
 --
 -- Constraints for dumped tables
@@ -2012,7 +1928,7 @@ ALTER TABLE `lessons`
 -- Constraints for table `logs`
 --
 ALTER TABLE `logs`
-  ADD CONSTRAINT `logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `fk_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `notification`

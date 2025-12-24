@@ -1,7 +1,7 @@
 const { query } = require('../config/db');
 const moment = require('moment');
 const bcrypt = require('bcrypt');
-
+const crypto = require('crypto');
 const getUsers = async (req, res) => {
     try {
         const sql = `
@@ -140,8 +140,20 @@ const login = async (req, res, fastify) => {
     }
 
     try {
-        // ค้นหาผู้ใช้
-        const users = await query(`SELECT * FROM users WHERE email = ?`, [email]);
+        // ค้นหาผู้ใช้พร้อม role
+        const users = await query(`
+            SELECT 
+                users.user_id,
+                users.username,
+                users.email,
+                users.password_hash,
+                user_role.role_id,
+                roles.role_name
+            FROM users
+            LEFT JOIN user_role ON users.user_id = user_role.user_id
+            LEFT JOIN roles ON user_role.role_id = roles.role_id
+            WHERE users.email = ?
+        `, [email]);
         if (users.length === 0) {
             await logLoginAttempt(null, email, 'fail', 'User not found'); //บันทึกการพยายามเข้าระบบ
             return res.status(401).send({
@@ -150,13 +162,10 @@ const login = async (req, res, fastify) => {
                 data: []
             });
         }
-        // สร้าง hash ใหม่จาก password
-        const hash = await bcrypt.hash(password_hash, 10);
-
         const user = users[0];
 
-
-        const match = await bcrypt.compare(password_hash, hash);
+        // เปรียบเทียบ password ที่ส่งมาด้วย hash ที่เก็บในฐานข้อมูล
+        const match = await bcrypt.compare(password_hash, user.password_hash);
         console.log('Password match:', match);
 
         if (!match) {
@@ -201,32 +210,66 @@ const login = async (req, res, fastify) => {
     }
 };
 
-// 🧾 ฟังก์ชันบันทึก log การ login
-const logLoginAttempt = async (user_id, email, status, note) => {
-    const sql = `INSERT INTO event_logs (event_type, severity, message, metadata, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
+/**
+ * hash email เพื่อใช้ debug โดยไม่รู้ email จริง
+ */
+const hashValue = (value) => {
+    if (!value) return null;
+    return crypto.createHash('sha256').update(value).digest('hex');
+};
+/**
+ * บันทึก log การ login
+ */
+const logLoginAttempt = async (user_id, status, note = null, req = null) => {
+
+    const action = status === 'success'
+        ? 'LOGIN_SUCCESS'
+        : 'LOGIN_FAILURE';
+
+    const log_level = status === 'success'
+        ? 'INFO'
+        : 'WARN';
 
     const metadata = {
-        email: email,
-        status: status,
-        note: note
+        result: status,
+        note: note || undefined,
+        source: 'auth',
+        email_hash: req?.body?.email
+            ? hashValue(req.body.email)
+            : undefined
     };
 
+    const sql = `
+        INSERT INTO logs (
+            user_id,
+            action,
+            action_detail,
+            module,
+            log_level,
+            ip_address,
+            user_agent,
+            metadata,
+            created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
     const values = [
-        status === 'success' ? 'login_success' : 'login_failure', // แยก event_type
-        status === 'success' ? 'info' : 'warning',               // severity เป็น 'info' สำหรับ success, 'warning' สำหรับ failure
-        `Login ${status}: ${email}`,
+        user_id || null,
+        action,
+        `User login ${status}`,
+        'auth',
+        log_level,
+        req?.ip || null,
+        req?.headers?.['user-agent'] || null,
         JSON.stringify(metadata),
-        user_id,
         new Date()
     ];
 
     await query(sql, values);
 };
 
-
 const register = async (req, res) => {
     const { email, password_hash, confirmpassword, username } = req.body;
-    console.log('Register request:', req.body);
 
     if (!email || !password_hash || !confirmpassword || !username) {
         return res.status(400).send({
@@ -235,7 +278,7 @@ const register = async (req, res) => {
         });
     }
 
-    if (password !== confirmpassword) {
+    if (password_hash !== confirmpassword) {
         return res.status(400).send({
             status: 400,
             message: 'Passwords do not match',
@@ -243,8 +286,12 @@ const register = async (req, res) => {
     }
 
     try {
-        // ตรวจสอบว่า email ซ้ำหรือไม่
-        const users = await query(`SELECT * FROM users WHERE email = ?`, [email]);
+        // ตรวจสอบ email ซ้ำ
+        const users = await query(
+            `SELECT user_id FROM users WHERE email = ?`,
+            [email]
+        );
+
         if (users.length > 0) {
             return res.status(409).send({
                 status: 409,
@@ -252,42 +299,89 @@ const register = async (req, res) => {
             });
         }
 
-        // เข้ารหัสรหัสผ่าน
+        // hash password
         const hashedPassword = await bcrypt.hash(password_hash, 10);
-        const sql = `INSERT INTO users (email, password_hash, username) VALUES (?, ?, ?)`;
-        const values = [email, hashedPassword, username];
 
-        // เพิ่มผู้ใช้งานใหม่
+        // create user
+        const sql = `
+            INSERT INTO users (email, password_hash, username)
+            VALUES (?, ?, ?)
+        `;
+        const values = [email, hashedPassword, username];
         const result = await query(sql, values);
 
-        // บันทึก event log
-        const logQuery = `
-            INSERT INTO event_logs (event_type, severity, message, metadata, created_by, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+        /* ======================
+           CREATE LOG (SAFE)
+        ====================== */
+        const logSql = `
+            INSERT INTO logs (
+                user_id,
+                action,
+                action_detail,
+                module,
+                log_level,
+                ip_address,
+                user_agent,
+                metadata,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        const logValues = [
-            'register',               // event_type
-            'INFO',                   // severity
-            `New user registered: ${email}`,  // message
-            JSON.stringify({ email, username }),  // metadata
-            result.insertId,         // created_by
-            new Date()               // created_at
-        ];
-        await query(logQuery, logValues);
 
-        // ตอบกลับ frontend
+        const metadata = {
+            email_hash: hashValue(email),
+            username_hash: hashValue(username),
+            source: 'register'
+        };
+
+        const logValues = [
+            result.insertId,
+            'REGISTER_SUCCESS',
+            'New user registered',
+            'auth',
+            'INFO',
+            req.ip || null,
+            req.headers['user-agent'] || null,
+            JSON.stringify(metadata),
+            new Date()
+        ];
+
+        await query(logSql, logValues);
+
+        // response
         return res.status(201).send({
             status: 201,
             message: 'Registration successful',
             data: {
                 user_id: result.insertId,
-                email,
-                username,
+                username
             }
         });
 
     } catch (error) {
         console.error('Error during registration:', error);
+
+        // log error (optional)
+        await query(
+            `
+            INSERT INTO logs (
+                action,
+                action_detail,
+                module,
+                log_level,
+                metadata,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            `,
+            [
+                'REGISTER_ERROR',
+                'Error during registration',
+                'auth',
+                'ERROR',
+                JSON.stringify({ error: error.message }),
+                new Date()
+            ]
+        );
+
         return res.status(500).send({
             status: 500,
             message: 'Internal server error',

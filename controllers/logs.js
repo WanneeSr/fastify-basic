@@ -1,118 +1,126 @@
 const { query } = require('../config/db');
-//ssz 125
+const crypto = require('crypto');
 
-const createActionLogs = async (req, res) => {
+/**
+ * helper: hash IP (optional แต่แนะนำ)
+ */
+const hashIp = (ip) => {
+    if (!ip) return null;
+    return crypto.createHash('sha256').update(ip).digest('hex');
+};
+
+/**
+ * CREATE LOG
+ */
+const createLog = async (req, res) => {
     try {
         const {
             user_id,
-            action_type,
-            action_description,
-            target_id,
+            action,
+            action_detail,
             target_type,
-            user_agent
+            target_id,
+            module,
+            log_level = 'INFO',
+            metadata
         } = req.body;
-        const ip_address = req.ip; // ใช้ req.ip เพื่อดึง IP address ของผู้ใช้
 
-        // ตรวจสอบ input ที่จำเป็น
-        if (!user_id || !action_type || !action_description) {
-            return res.status(400).send({ message: 'Missing required fields.' });
+        // validation
+        if (!action || !module) {
+            return res.status(400).send({
+                message: 'action and module are required'
+            });
         }
 
+        // safe metadata
+        let metadataStr = null;
+        if (metadata) {
+            try {
+                metadataStr = JSON.stringify(metadata);
+            } catch {
+                return res.status(400).send({ message: 'Invalid metadata format' });
+            }
+        }
+
+        const ip_address = hashIp(req.ip);
+        const user_agent = req.headers['user-agent'] || null;
         const created_at = new Date();
 
         const sql = `
-        INSERT INTO action_logs (
-          user_id, action_type, action_description, 
-          target_id, target_type, ip_address, user_agent, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `;
+            INSERT INTO logs (
+                user_id,
+                action,
+                action_detail,
+                target_type,
+                target_id,
+                module,
+                log_level,
+                ip_address,
+                user_agent,
+                metadata,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
 
         const values = [
-            user_id,
-            action_type,
-            action_description,
-            target_id || null,
+            user_id || null,
+            action,
+            action_detail || null,
             target_type || null,
-            ip_address || null,
-            user_agent || null,
+            target_id || null,
+            module,
+            log_level,
+            ip_address,
+            user_agent,
+            metadataStr,
             created_at
         ];
 
-        const data = await query(sql, values);
+        const result = await query(sql, values);
 
         res.status(201).send({
-            message: 'Action log created successfully.',
-            action_log_id: data.insertId
+            message: 'Log created successfully',
+            log_id: result.insertId
         });
+
     } catch (error) {
-        console.error('Error creating action log:', error);
+        console.error('Create log error:', error);
         res.status(500).send({
-            message: 'Internal server error while creating action log.',
+            message: 'Internal server error',
             error: error.message
         });
     }
 };
 
-
-const getActionLogs = async (req, res) => {
+/**
+ * GET LOGS (basic)
+ */
+const getLogs = async (req, res) => {
     try {
-        const sql = `SELECT * FROM action_logs`;
+        const sql = `
+            SELECT 
+                log_id,
+                user_id,
+                action,
+                action_detail,
+                target_type,
+                target_id,
+                module,
+                log_level,
+                metadata,
+                created_at
+            FROM logs
+            ORDER BY created_at DESC
+            LIMIT 200
+        `;
         const data = await query(sql);
         res.status(200).send(data);
     } catch (error) {
         res.status(500).send(error);
-    }
-}
-
-const createEventLogs = async (req, res) => {
-    try {
-        const { user_id, event_type, severity, message, metadata } = req.body;
-
-      
-
-        // ตรวจสอบว่า metadata เป็น JSON หรือไม่
-        let metadataStr = null;
-        if (metadata) {
-            try {
-                // ถ้ามี metadata ให้แปลงเป็น JSON
-                metadataStr = JSON.stringify(metadata);
-            } catch (err) {
-                return res.status(400).send({ message: 'Invalid metadata format' });
-            }
-        }
-
-        const created_at = new Date(); // ใช้เวลาเป็น timestamp ISO
-
-        // SQL query สำหรับบันทึก event log
-        const sql = `INSERT INTO event_logs (event_type, severity, message, metadata, created_by, created_at) VALUES(?, ?, ?, ?, ?, ?)`;
-        const values = [event_type, severity, message, metadataStr, user_id, created_at];
-        const data = await query(sql, values);
-
-        // ส่งการตอบกลับเมื่อสร้าง event log สำเร็จ
-        res.status(201).send({ message: 'Event log created successfully!', logs_event_id: data.insertId });
-
-    } catch (error) {
-        console.error('Error creating event log:', error);
-        res.status(500).send({ message: 'Error creating event log', error: error.message });
     }
 };
 
-
-const getEventLogs = async (req, res) => {
-    try {
-        const sql = `SELECT * FROM event_logs`;
-        const data = await query(sql);
-        res.status(200).send(data);
-    } catch (error) {
-        res.status(500).send(error);
-    }
-}
-
-
-
 module.exports = {
-    createActionLogs,
-    getActionLogs,
-    createEventLogs,
-    getEventLogs
-}
+    createLog,
+    getLogs
+};

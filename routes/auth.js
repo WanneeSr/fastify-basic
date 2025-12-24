@@ -1,42 +1,21 @@
-const { randomUUID } = require('crypto')
-const bcrypt = require('bcrypt')
-const { error } = require('console')
-const { query } = require('../config/db')
+const users = require('../controllers/users')
 
 async function authRoutes(fastify, options) {
+  // Login endpoint - ใช้ function จาก users controller
+  fastify.post('/login', (req, reply) => users.login(req, reply, fastify))
 
-  // ตัวอย่าง Login → สร้าง token
-  fastify.post('/login', async (req, reply) => {
-    const { email, password } = req.body
-
-    if (!email || !password) {
-      return reply.status(400).send({ error: 'Email and password are required' })
-    }
-
-    // ตรวจสอบรหัสผ่าน
-    const passwordHash = await bcrypt.hash(password, 10)
-    
-    const passwordMatch = await bcrypt.compare(password, passwordHash)
-    if (!passwordMatch) {
-      return reply.status(401).send({ error: 'Invalid credentials' })
-    }
-
-    const data = `SELECT * FROM users WHERE email = ?`
-    const values = [email];
-    const user = await query(data, values)
-
-    const token = fastify.jwt.sign({
-      user_id: user.user_id,
-      email: user.email,
-      role: user.role
-    }, { expiresIn: '1h' })
-
-    return { token }  // แนะนำให้ return เป็น object ที่ชัดเจน
+  // Logout endpoint - จริงๆ แล้ว logout ไม่ต้องเรียก API แต่เพิ่มไว้เพื่อความสมบูรณ์
+  fastify.post('/logout', { preValidation: [fastify.authenticate] }, async (req, reply) => {
+    // ใน JWT, logout จริงๆ คือการลบ token ที่ client side
+    // แต่สามารถบันทึก log ได้ที่นี่
+    return reply.send({ 
+      status: 200,
+      message: 'Logout successful'
+    })
   })
 
-  // ตัวอย่าง route ที่ต้องตรวจสอบ token
+  // Profile endpoint - ต้องมี token
   fastify.get('/profile', { preValidation: [fastify.authenticate] }, async (req, reply) => {
-    // req.user มาจาก token
     return { user: req.user }
   })
 }
